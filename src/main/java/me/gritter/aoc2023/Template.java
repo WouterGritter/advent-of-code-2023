@@ -1,4 +1,4 @@
-package me.gritter.aoc;
+package me.gritter.aoc2023;
 
 public class Template {
 
