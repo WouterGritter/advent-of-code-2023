@@ -11,6 +11,17 @@ import java.util.stream.Stream;
 import static java.lang.Long.parseLong;
 import static org.apache.commons.lang3.StringUtils.*;
 
+/**
+ * Code execution time for star 2.
+ *
+ * Virtualized Intel Xeon E3-1230 v6 (8 cores):
+ *   Single threaded (Day5#solution):               359 seconds
+ *   Multi threaded (Day5#solution_multithreading): 157 seconds
+ *
+ * Virtualized Intel Xeon Gold 6140 (8 cores):
+ *   Single threaded (Day5#solution):               403 seconds
+ *   Multi threaded (Day5#solution_multithreading): 127 seconds
+ */
 public class Day5 {
 
     public static void main(String[] args) {
