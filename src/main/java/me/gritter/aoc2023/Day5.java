@@ -21,6 +21,10 @@ import static org.apache.commons.lang3.StringUtils.*;
  * Virtualized Intel Xeon Gold 6140 (8 cores):
  *   Single threaded (Day5#solution):               403 seconds
  *   Multi threaded (Day5#solution_multithreading): 127 seconds
+ *
+ * Virtualized AMD Ryzen 5 2600 (12 cores):
+ *   Single threaded (Day5#solution):               341 seconds
+ *   Multi threaded (Day5#solution_multithreading): 144 seconds
  */
 public class Day5 {
 
