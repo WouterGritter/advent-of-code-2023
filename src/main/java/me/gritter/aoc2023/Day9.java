@@ -21,9 +21,6 @@ public class Day9 {
                 .sum();
 
         System.out.println(sum);
-
-        var s = new Sequence(1, 1);
-        System.out.println(s);
     }
 
     private Sequence parseSequence(String line) {
