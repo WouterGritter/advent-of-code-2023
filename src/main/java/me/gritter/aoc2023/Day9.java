@@ -21,6 +21,9 @@ public class Day9 {
                 .sum();
 
         System.out.println(sum);
+
+        var s = new Sequence(1, 1);
+        System.out.println(s);
     }
 
     private Sequence parseSequence(String line) {
@@ -128,6 +131,10 @@ public class Day9 {
 
         @Override
         public String toString() {
+            if (numbers.isEmpty()) {
+                return "";
+            }
+
             int longestNumber = findLongestNumberRecursively();
             int charsPerNumber = longestNumber % 2 == 1 ? longestNumber : longestNumber + 1;
             int omitLeftPaddingNumber = padCalculateLeftPadding(String.valueOf(numbers.get(0)), charsPerNumber);
