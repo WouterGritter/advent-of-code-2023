@@ -5,20 +5,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class Day10 {
+public class Day10 implements Solution {
 
     public static void main(String[] args) {
-        new Day10().solution("day10-puzzle.txt");
+        Solution solution = new Day10();
+        System.out.println(solution.solution_star2("day10-puzzle.txt"));
     }
 
-    public void solution(String file) {
+    @Override
+    public long solution_star1(String file) {
         Board board = loadBoard(file);
 
-//        solution_star1(board); // Star 1
-        solution_star2(board); // Star 2
-    }
-
-    private void solution_star1(Board board) {
         Position startPosition = board.positionStream()
                 .filter(pos -> board.get(pos) == Tile.START)
                 .findAny()
@@ -42,10 +39,13 @@ public class Day10 {
             }
         }
 
-        System.out.println("distance = " + distance);
+        return distance;
     }
 
-    private void solution_star2(Board board) {
+    @Override
+    public long solution_star2(String file) {
+        Board board = loadBoard(file);
+
         Position startPosition = board.positionStream()
                 .filter(pos -> board.get(pos) == Tile.START)
                 .findAny()
@@ -153,6 +153,8 @@ public class Day10 {
 
         System.out.println();
         System.out.println("insidePositions.size() = " + insidePositions.size());
+
+        return insidePositions.size();
     }
 
     private void flush(Board board, Set<Position> flushPositions, Set<Position> loopPositions) {
@@ -277,6 +279,7 @@ public class Day10 {
             return get(position)
                     .deltas()
                     .map(position::add)
+                    .filter(this::isInBounds)
                     .filter(neighborPosition ->
                             get(neighborPosition)
                                     .deltas()

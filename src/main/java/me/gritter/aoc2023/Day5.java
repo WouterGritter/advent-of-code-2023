@@ -26,30 +26,28 @@ import static org.apache.commons.lang3.StringUtils.*;
  *   Single threaded (Day5#solution):               341 seconds
  *   Multi threaded (Day5#solution_multithreading): 144 seconds
  */
-public class Day5 {
+public class Day5 implements Solution {
 
     public static void main(String[] args) {
-//        new Day5().solution("day5-puzzle.txt");
-        new Day5().solution_multithreading("day5-puzzle.txt");
+        Solution solution = new Day5();
+        System.out.println(solution.solution_star2("day5-puzzle.txt"));
     }
 
-    public void solution(String file) {
+    @Override
+    public long solution_star1(String file) {
         var almanac = parseGardenAlmanac(file);
 
-        long minLocation = Utils.readLines(file)
+        return Utils.readLines(file)
                 .filter(line -> line.startsWith("seeds: "))
                 .map(line -> substringAfter(line, "seeds: "))
-//                .flatMapToLong(this::parseSeeds_star1) // Star 1
-                .flatMapToLong(this::parseSeeds_star2) // Star 2
+                .flatMapToLong(this::parseSeeds_star1)
                 .map(almanac::mapThroughAllCategories)
                 .min()
                 .orElseThrow();
-
-        System.out.println(minLocation);
     }
 
-    // Star 2 (with added multithreading)
-    public void solution_multithreading(String file) {
+    @Override
+    public long solution_star2(String file) {
         var almanac = parseGardenAlmanac(file);
 
         Collection<String> seedPairs = Utils.readLines(file)
@@ -101,6 +99,20 @@ public class Day5 {
 
         System.out.println("All threads exited.");
         System.out.println("minimum = " + min.get());
+
+        return min.get();
+    }
+
+    public long solution_star2_single_threaded(String file) {
+        var almanac = parseGardenAlmanac(file);
+
+        return Utils.readLines(file)
+                .filter(line -> line.startsWith("seeds: "))
+                .map(line -> substringAfter(line, "seeds: "))
+                .flatMapToLong(this::parseSeeds_star2)
+                .map(almanac::mapThroughAllCategories)
+                .min()
+                .orElseThrow();
     }
 
     private GardenAlmanac parseGardenAlmanac(String file) {

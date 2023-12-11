@@ -7,19 +7,70 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Integer.parseInt;
-import static org.apache.commons.lang3.StringUtils.*;
+import static java.util.Map.entry;
+import static org.apache.commons.lang3.StringUtils.substringAfter;
+import static org.apache.commons.lang3.StringUtils.substringBefore;
 
-public class Day7 {
+public class Day7 implements Solution {
+
+    private static final Map<Character, Card> STAR_1_CARD_MAP = Map.ofEntries(
+            entry('A', Card.ACE),
+            entry('K', Card.KING),
+            entry('Q', Card.QUEEN),
+            entry('J', Card.JACK),
+            entry('T', Card.TEN),
+            entry('9', Card.NINE),
+            entry('8', Card.EIGHT),
+            entry('7', Card.SEVEN),
+            entry('6', Card.SIX),
+            entry('5', Card.FIVE),
+            entry('4', Card.FOUR),
+            entry('3', Card.THREE),
+            entry('2', Card.TWO)
+    );
+
+    private static final Map<Character, Card> STAR_2_CARD_MAP = Map.ofEntries(
+            entry('A', Card.ACE),
+            entry('K', Card.KING),
+            entry('Q', Card.QUEEN),
+            entry('J', Card.JOKER),
+            entry('T', Card.TEN),
+            entry('9', Card.NINE),
+            entry('8', Card.EIGHT),
+            entry('7', Card.SEVEN),
+            entry('6', Card.SIX),
+            entry('5', Card.FIVE),
+            entry('4', Card.FOUR),
+            entry('3', Card.THREE),
+            entry('2', Card.TWO)
+    );
 
     public static void main(String[] args) {
-        new Day7().solution("day7-puzzle.txt");
+        Solution solution = new Day7();
+        System.out.println(solution.solution_star2("day7-puzzle.txt"));
     }
 
-    public void solution(String file) {
-        List<Hand> sortedHands = Utils.readLines(file)
-                .map(this::parseHand)
-                .sorted()
-                .collect(Collectors.toList());
+    @Override
+    public long solution_star1(String file) {
+        Collection<Hand> hands = Utils.readLines(file)
+                .map(line -> parseHand(line, STAR_1_CARD_MAP))
+                .collect(Collectors.toSet());
+
+        return countWinnings(hands);
+    }
+
+    @Override
+    public long solution_star2(String file) {
+        Collection<Hand> hands = Utils.readLines(file)
+                .map(line -> parseHand(line, STAR_2_CARD_MAP))
+                .collect(Collectors.toSet());
+
+        return countWinnings(hands);
+    }
+
+    private int countWinnings(Collection<Hand> hands) {
+        List<Hand> sortedHands = new ArrayList<>(hands);
+        Collections.sort(sortedHands);
 
         int winnings = 0;
         for (int i = 0; i < sortedHands.size(); i++) {
@@ -29,14 +80,15 @@ public class Day7 {
             winnings += rank * hand.getBid();
         }
 
-        System.out.println(winnings);
+        return winnings;
     }
 
-    private Hand parseHand(String line) {
+    private Hand parseHand(String line, Map<Character, Card> cardMap) {
         List<Card> cards = Stream.of(substringBefore(line, " "))
                 .flatMapToInt(String::chars)
                 .mapToObj(c -> (char) c)
-                .map(Card::bySymbol)
+                .map(cardMap::get)
+                .map(Objects::requireNonNull)
                 .collect(Collectors.toList());
 
         int bid = parseInt(substringAfter(line, " "));
@@ -45,45 +97,30 @@ public class Day7 {
     }
 
     public enum Card {
-        ACE('A', 13),
-        KING('K', 12),
-        QUEEN('Q', 11),
-//        JACK('J', 10), // Star 1
-        JOKER('J', -1), // Star 2
-        T('T', 9),
-        NINE('9', 8),
-        EIGHT('8', 7),
-        SEVEN('7', 6),
-        SIX('6', 5),
-        FIVE('5', 4),
-        FOUR('4', 3),
-        THREE('3', 2),
-        TWO('2', 1);
+        JOKER(-1),
 
-        private final char symbol;
+        ACE(14),
+        KING(13),
+        QUEEN(12),
+        JACK(11),
+        TEN(10),
+        NINE(9),
+        EIGHT(8),
+        SEVEN(7),
+        SIX(6),
+        FIVE(5),
+        FOUR(4),
+        THREE(3),
+        TWO(2);
+
         private final int value;
 
-        Card(char symbol, int value) {
-            this.symbol = symbol;
+        Card(int value) {
             this.value = value;
-        }
-
-        public char symbol() {
-            return symbol;
         }
 
         public int value() {
             return value;
-        }
-
-        public static Card bySymbol(char symbol) {
-            for (Card card : values()) {
-                if (card.symbol == symbol) {
-                    return card;
-                }
-            }
-
-            return null;
         }
     }
 
@@ -130,11 +167,6 @@ public class Day7 {
         }
 
         public HandType calculateHandType() {
-//            return calculateHandType_star1(); // Star 1
-            return calculateHandType_star2(); // Star 2
-        }
-
-        private HandType calculateHandType_star2() {
             for (int i = 0; i < cards.size(); i++) {
                 Card card = cards.get(i);
                 if (card == Card.JOKER) {
@@ -146,7 +178,7 @@ public class Day7 {
                         List<Card> replacementCards = new ArrayList<>(cards);
                         replacementCards.set(i, replacementCard);
                         Hand replacementHand = new Hand(replacementCards, bid);
-                        HandType replacementHandType = replacementHand.calculateHandType_star2();
+                        HandType replacementHandType = replacementHand.calculateHandType();
 
                         if (highestHandType == null || replacementHandType.strength() > highestHandType.strength()) {
                             highestHandType = replacementHandType;
@@ -157,10 +189,14 @@ public class Day7 {
                 }
             }
 
-            return calculateHandType_star1();
+            return calculatePureHandType();
         }
 
-        public HandType calculateHandType_star1() {
+        private HandType calculatePureHandType() {
+            if (cards.stream().anyMatch(Card.JOKER::equals)) {
+                throw new IllegalStateException();
+            }
+
             List<Integer> frequencies = cards.stream()
                     .distinct()
                     .map(card -> Collections.frequency(cards, card))
@@ -203,7 +239,7 @@ public class Day7 {
 
             if (selfStrength != otherStrength) {
                 return selfStrength - otherStrength;
-            }else {
+            } else {
                 for (int i = 0; i < Math.min(cards.size(), other.cards.size()); i++) {
                     int selfCard = cards.get(i).value();
                     int otherCard = other.cards.get(i).value();

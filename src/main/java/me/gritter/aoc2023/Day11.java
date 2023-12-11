@@ -11,23 +11,31 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class Day11 {
+public class Day11 implements Solution {
 
     public static void main(String[] args) {
-        new Day11().solution("day11-puzzle.txt");
+        Solution solution = new Day11();
+        System.out.println(solution.solution_star2("day11-puzzle.txt"));
     }
 
-    public void solution(String file) {
+    @Override
+    public long solution_star1(String file) {
+        return solution(file, 2);
+    }
+
+    @Override
+    public long solution_star2(String file) {
+        return solution(file, 1000000);
+    }
+
+    public long solution(String file, long expansionFactor) {
         Universe universe = loadUniverse(file);
 
-//        universe.expand(2); // Star 1
-        universe.expand(1000000); // Star 2
+        universe.expand(expansionFactor);
 
-        long totalDistance = universe.galaxyPairStream()
+        return universe.galaxyPairStream()
                 .mapToLong(pair -> universe.distanceBetween(pair.getLeft(), pair.getRight()))
                 .sum();
-
-        System.out.println(totalDistance);
     }
 
     private Universe loadUniverse(String file) {

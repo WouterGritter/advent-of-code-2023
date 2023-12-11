@@ -6,32 +6,35 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
-public class Day3 {
+public class Day3 implements Solution {
 
     public static void main(String[] args) {
-        new Day3().solution("day3-puzzle.txt");
+        Solution solution = new Day3();
+        System.out.println(solution.solution_star2("day3-puzzle.txt"));
     }
 
-    public void solution(String file) {
+    @Override
+    public long solution_star1(String file) {
         var schematic = parseSchematic(file);
 
-        // Star 1
-//        int sum = schematic.findNumbers()
-//                .filter(range -> range.adjacent().map(schematic::get).flatMap(Optional::stream).anyMatch(this::isSymbol))
-//                .map(schematic::getStringRepresentation)
-//                .mapToInt(Integer::parseInt)
-//                .sum();
+        return schematic.findNumbers()
+                .filter(range -> range.adjacent().map(schematic::get).flatMap(Optional::stream).anyMatch(this::isSymbol))
+                .map(schematic::getStringRepresentation)
+                .mapToInt(Integer::parseInt)
+                .sum();
+    }
 
-        // Star 2
-        int sum = schematic.getBounds()
+    @Override
+    public long solution_star2(String file) {
+        var schematic = parseSchematic(file);
+
+        return schematic.getBounds()
                 .toPointStream()
                 .filter(point -> schematic.get(point).map(this::isStar).orElse(false))
                 .map(schematic::calculateGearRatio)
                 .flatMap(Optional::stream)
                 .mapToInt(i -> i)
                 .sum();
-
-        System.out.println(sum);
     }
 
     private Schematic parseSchematic(String file) {

@@ -12,23 +12,24 @@ import java.util.stream.Stream;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 
-public class Day6 {
+public class Day6 implements Solution {
 
     public static void main(String[] args) {
-        new Day6().solution("day6-puzzle.txt");
+        Solution solution = new Day6();
+        System.out.println(solution.solution_star2("day6-puzzle.txt"));
     }
 
-    public void solution(String file) {
-        // Star 1
-//        long product = parseRaces_star1(file)
-//                .map(Race::calculateWinPossibilities)
-//                .reduce(1L, (a, b) -> a * b);
-//
-//        System.out.println(product);
+    @Override
+    public long solution_star1(String file) {
+        return parseRaces_star1(file)
+                .map(Race::calculateWinPossibilities)
+                .reduce(1L, (a, b) -> a * b);
+    }
 
-        // Star 2
+    @Override
+    public long solution_star2(String file) {
         var race = parseRace_star2(file);
-        System.out.println(race.calculateWinPossibilities());
+        return race.calculateWinPossibilities();
     }
 
     private Race parseRace_star2(String file) {

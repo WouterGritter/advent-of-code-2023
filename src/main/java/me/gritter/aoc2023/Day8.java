@@ -10,25 +10,37 @@ import static java.util.function.Function.identity;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
 import static org.apache.commons.lang3.StringUtils.substringBetween;
 
-public class Day8 {
+public class Day8 implements Solution {
 
     public static void main(String[] args) {
-        new Day8().solution("day8-puzzle.txt");
+        Solution solution = new Day8();
+        System.out.println(solution.solution_star2("day8-puzzle.txt"));
     }
 
-    public void solution(String file) {
-//        Network network = loadNetwork(file, Star1NetworkNode::new); // Star 1
-        Network network = loadNetwork(file, Star2NetworkNode::new); // Star 2
+    @Override
+    public long solution_star1(String file) {
+        Network network = loadNetwork(file, Star1NetworkNode::new);
 
-        long answer = network.getNodes()
+        return network.getNodes()
                 .stream()
                 .filter(NetworkNode::isStartingNode)
                 .map(node -> new Walker(network, node))
                 .map(Walker::walkUntilEnd)
                 .reduce(this::reduceLeastCommonDivider)
                 .orElseThrow();
+    }
 
-        System.out.println(answer);
+    @Override
+    public long solution_star2(String file) {
+        Network network = loadNetwork(file, Star2NetworkNode::new);
+
+        return network.getNodes()
+                .stream()
+                .filter(NetworkNode::isStartingNode)
+                .map(node -> new Walker(network, node))
+                .map(Walker::walkUntilEnd)
+                .reduce(this::reduceLeastCommonDivider)
+                .orElseThrow();
     }
 
     private long reduceLeastCommonDivider(long a, long b) {

@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-public class Day1 {
+public class Day1 implements Solution {
 
     private static final Map<String, Integer> NUMBERS = Map.of(
             "one", 1,
@@ -19,17 +19,22 @@ public class Day1 {
     );
 
     public static void main(String[] args) {
-//        new Day1().solution("day1-sample.txt");
-        new Day1().solution("day1-puzzle.txt");
+        Solution solution = new Day1();
+        System.out.println(solution.solution_star2("day1-puzzle.txt"));
     }
 
-    public void solution(String file) {
-        int sum = Utils.readLines(file)
-//                .mapToInt(line -> extractNumber(line, this::extractNumberByChar)) // Star 1
-                .mapToInt(line -> extractNumber(line, this::extractNumberByCharOrName)) // Star 2
+    @Override
+    public long solution_star1(String file) {
+        return Utils.readLines(file)
+                .mapToInt(line -> extractNumber(line, this::extractNumberByChar))
                 .sum();
+    }
 
-        System.out.println(sum);
+    @Override
+    public long solution_star2(String file) {
+        return Utils.readLines(file)
+                .mapToInt(line -> extractNumber(line, this::extractNumberByCharOrName))
+                .sum();
     }
 
     private int extractNumber(String input, BiFunction<String, Integer, Optional<Integer>> charMapFunction) {

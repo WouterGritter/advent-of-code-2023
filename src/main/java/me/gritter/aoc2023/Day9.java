@@ -7,20 +7,35 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Day9 {
+/**
+ * As part of an extra exercise, I have attempted to implement the Sequence#toString method to
+ * match the String representations found on <a href="https://adventofcode.com/2023/day/9">Advent of Code</a>.
+ * <p>
+ * The toString method uses a StringBuilder and does not re-generate or delete characters; it only adds to
+ * the buffer (which made it a bit harder). The tests found in the Day9Test class confirm the
+ * Sequence#toString method generates strings equivalent to those found on the Advent of Code page.
+ */
+public class Day9 implements Solution {
 
     public static void main(String[] args) {
-        new Day9().solution("day9-puzzle.txt");
+        Solution solution = new Day9();
+        System.out.println(solution.solution_star2("day9-puzzle.txt"));
     }
 
-    public void solution(String file) {
-        int sum = Utils.readLines(file)
+    @Override
+    public long solution_star1(String file) {
+        return Utils.readLines(file)
                 .map(this::parseSequence)
-//                .mapToInt(Sequence::predictNext) // Star 1
-                .mapToInt(Sequence::predictPrevious) // Star 2
+                .mapToInt(Sequence::predictNext)
                 .sum();
+    }
 
-        System.out.println(sum);
+    @Override
+    public long solution_star2(String file) {
+        return Utils.readLines(file)
+                .map(this::parseSequence)
+                .mapToInt(Sequence::predictPrevious)
+                .sum();
     }
 
     private Sequence parseSequence(String line) {

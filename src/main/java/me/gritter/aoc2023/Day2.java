@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import static java.lang.Integer.parseInt;
 import static org.apache.commons.lang3.StringUtils.*;
 
-public class Day2 {
+public class Day2 implements Solution {
 
     private static final Map<String, Integer> MAX_COLORS = Map.of(
             "red", 12,
@@ -18,26 +18,26 @@ public class Day2 {
     );
 
     public static void main(String[] args) {
-//        new Day2().solution("day2-sample.txt");
-        new Day2().solution("day2-puzzle.txt");
+        Solution solution = new Day2();
+        System.out.println(solution.solution_star2("day2-puzzle.txt"));
     }
 
-    public void solution(String file) {
-        // Star 1
-//        int sum = Utils.readLines(file)
-//                .map(this::parseGame)
-//                .filter(Game::isPossible)
-//                .mapToInt(Game::getId)
-//                .sum();
+    @Override
+    public long solution_star1(String file) {
+        return Utils.readLines(file)
+                .map(this::parseGame)
+                .filter(Game::isPossible)
+                .mapToInt(Game::getId)
+                .sum();
+    }
 
-        // Star 2
-        int sum = Utils.readLines(file)
+    @Override
+    public long solution_star2(String file) {
+        return Utils.readLines(file)
                 .map(this::parseGame)
                 .map(Game::getMinimumRequiredSet)
                 .mapToInt(GameSet::getPower)
                 .sum();
-
-        System.out.println(sum);
     }
 
     private Game parseGame(String gameStr) {

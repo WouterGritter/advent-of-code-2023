@@ -9,20 +9,23 @@ import static org.apache.commons.collections4.CollectionUtils.intersection;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.apache.commons.lang3.StringUtils.substringBetween;
 
-public class Day4 {
+public class Day4 implements Solution {
 
     public static void main(String[] args) {
-        new Day4().solution("day4-puzzle.txt");
+        Solution solution = new Day4();
+        System.out.println(solution.solution_star2("day4-puzzle.txt"));
     }
 
-    public void solution(String file) {
-        // Star 1
-//        int sum = Utils.readLines(file)
-//                .map(this::parseScratchGame)
-//                .mapToInt(ScratchGame::getScore)
-//                .sum();
+    @Override
+    public long solution_star1(String file) {
+        return Utils.readLines(file)
+                .map(this::parseScratchGame)
+                .mapToInt(ScratchGame::getScore)
+                .sum();
+    }
 
-        // Star 2
+    @Override
+    public long solution_star2(String file) {
         List<ScratchGame> games = Utils.readLines(file)
                 .map(this::parseScratchGame)
                 .collect(Collectors.toList());
@@ -39,7 +42,7 @@ public class Day4 {
             }
         }
 
-        System.out.println(sum);
+        return sum;
     }
 
     private ScratchGame parseScratchGame(String game) {
