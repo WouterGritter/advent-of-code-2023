@@ -3,13 +3,16 @@ package me.gritter.aoc2023;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.math.BigInteger.ONE;
+import static java.math.BigInteger.ZERO;
 
 public class Day11 implements Solution {
 
@@ -31,11 +34,13 @@ public class Day11 implements Solution {
     public long solution(String file, long expansionFactor) {
         Universe universe = loadUniverse(file);
 
-        universe.expand(expansionFactor);
+        universe.expand(BigInteger.valueOf(expansionFactor));
 
-        return universe.galaxyPairStream()
-                .mapToLong(pair -> universe.distanceBetween(pair.getLeft(), pair.getRight()))
-                .sum();
+        var sum = universe.galaxyPairStream()
+                .map(pair -> universe.distanceBetween(pair.getLeft(), pair.getRight()))
+                .reduce(ZERO, BigInteger::add);
+
+        return sum.longValueExact();
     }
 
     private Universe loadUniverse(String file) {
@@ -71,6 +76,10 @@ public class Day11 implements Solution {
             this(galaxies, false);
         }
 
+        public boolean isExpanded() {
+            return expanded;
+        }
+
         public Stream<Galaxy> galaxyStream() {
             return galaxies.stream();
         }
@@ -83,63 +92,48 @@ public class Day11 implements Solution {
                     .flatMap(i ->
                             galaxyList.stream()
                                     .skip(i + 1)
-                                    .map(g2 -> ImmutablePair.of(galaxyList.get(i), g2))
+                                    .map(g -> ImmutablePair.of(galaxyList.get(i), g))
                     );
         }
 
-        public long distanceBetween(Galaxy a, Galaxy b) {
-            return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y());
+        public BigInteger distanceBetween(Galaxy a, Galaxy b) {
+            var xDelta = a.getX().subtract(b.getX()).abs();
+            var yDelta = a.getY().subtract(b.getY()).abs();
+
+            return xDelta.add(yDelta);
         }
 
-        public void expand(long expansionFactor) {
-            if (expanded) {
-                throw new IllegalStateException("Expansion is only allowed once.");
-            }
-
+        public void expand(BigInteger expansionFactor) {
             expanded = true;
 
-            Bounds bounds = calculateBounds();
-
-            // Expand rows (y)
-            for (long y = bounds.maxY(); y >= bounds.minY(); y--) {
-                final long _y = y;
-                boolean emptyRow = galaxies.stream().noneMatch(g -> g.y() == _y);
-                if (emptyRow) {
-                    galaxies.stream()
-                            .filter(g -> g.y() > _y)
-                            .collect(Collectors.toSet())
-                            .forEach(g -> g.y(g.y() + expansionFactor - 1));
-
-                    bounds = calculateBounds();
-                }
-            }
-
-            // Expand columns (x)
-            for (long x = bounds.maxX(); x >= bounds.minX(); x--) {
-                final long _x = x;
-                boolean emptyColumn = galaxies.stream().noneMatch(g -> g.x() == _x);
-                if (emptyColumn) {
-                    galaxies.stream()
-                            .filter(g -> g.x() > _x)
-                            .collect(Collectors.toSet())
-                            .forEach(g -> g.x(g.x() + expansionFactor - 1));
-
-                    bounds = calculateBounds();
-                }
-            }
+            expandDirection(expansionFactor, Galaxy::getX, Galaxy::addX);
+            expandDirection(expansionFactor, Galaxy::getY, Galaxy::addY);
         }
 
-        public Bounds calculateBounds() {
-            long minX = 0, maxX = 0, minY = 0, maxY = 0;
-            for (Galaxy galaxy : galaxies) {
-                minX = Math.min(minX, galaxy.x());
-                maxX = Math.max(maxX, galaxy.x());
+        private void expandDirection(BigInteger expansionFactor, Function<Galaxy, BigInteger> coordinateGetter, BiConsumer<Galaxy, BigInteger> coordinateAdder) {
+            Optional<BigInteger> current = galaxies.stream()
+                    .map(coordinateGetter)
+                    .max(BigInteger::compareTo);
 
-                minY = Math.min(minY, galaxy.y());
-                maxY = Math.max(maxY, galaxy.y());
+            while (current.isPresent()) {
+                BigInteger _current = current.get();
+                Optional<BigInteger> next = galaxies.stream()
+                        .map(coordinateGetter)
+                        .filter(coordinate -> coordinate.compareTo(_current) < 0)
+                        .max(BigInteger::compareTo);
+
+                if (next.isPresent()) {
+                    BigInteger emptySpace = current.get().subtract(next.get()).subtract(ONE);
+                    if (emptySpace.compareTo(ZERO) > 0) {
+                        BigInteger addition = emptySpace.multiply(expansionFactor.subtract(ONE));
+                        galaxies.stream()
+                                .filter(g -> coordinateGetter.apply(g).compareTo(_current) >= 0)
+                                .forEach(g -> coordinateAdder.accept(g, addition));
+                    }
+                }
+
+                current = next;
             }
-
-            return new Bounds(minX, maxX, minY, maxY);
         }
 
         @Override
@@ -150,20 +144,30 @@ public class Day11 implements Solution {
 
             StringBuilder sb = new StringBuilder();
 
-            Bounds bounds = calculateBounds();
-            for (long y = bounds.minY(); y <= bounds.maxY(); y++) {
-                for (long x = bounds.minX(); x <= bounds.maxX(); x++) {
+            int minX = 0, maxX = 0, minY = 0, maxY = 0;
+            for (Galaxy galaxy : galaxies) {
+                minX = Math.min(minX, galaxy.getX().intValue());
+                maxX = Math.max(maxX, galaxy.getX().intValue());
+
+                minY = Math.min(minY, galaxy.getY().intValue());
+                maxY = Math.max(maxY, galaxy.getY().intValue());
+            }
+
+            for (int y = minY; y <= maxY; y++) {
+                for (int x = minX; x <= maxX; x++) {
                     sb.append('.');
                 }
 
-                if (y != bounds.maxY()) {
+                if (y != maxY) {
                     sb.append('\n');
                 }
             }
 
             for (Galaxy galaxy : galaxies) {
-                long index = galaxy.x() + galaxy.y() * (bounds.maxX() - bounds.minX() + 2); // account for newline
-                sb.setCharAt((int) index, '#');
+                int x = galaxy.getX().intValue();
+                int y = galaxy.getY().intValue();
+                int index = x + y * (maxX - minX + 2); // account for newline
+                sb.setCharAt(index, '#');
             }
 
             return sb.toString();
@@ -172,59 +176,40 @@ public class Day11 implements Solution {
 
     public static class Galaxy {
 
-        private long x;
-        private long y;
+        private BigInteger x;
+        private BigInteger y;
 
-        public Galaxy(long x, long y) {
+        public Galaxy(BigInteger x, BigInteger y) {
             this.x = x;
             this.y = y;
         }
 
-        public long x() {
+        public Galaxy(long x, long y) {
+            this(BigInteger.valueOf(x), BigInteger.valueOf(y));
+        }
+
+        public BigInteger getX() {
             return x;
         }
 
-        public long y() {
+        public BigInteger getY() {
             return y;
         }
 
-        public void x(long x) {
+        public void setX(BigInteger x) {
             this.x = x;
         }
 
-        public void y(long y) {
+        public void setY(BigInteger y) {
             this.y = y;
         }
-    }
 
-    public static class Bounds {
-
-        public final long minX;
-        public final long maxX;
-        public final long minY;
-        public final long maxY;
-
-        public Bounds(long minX, long maxX, long minY, long maxY) {
-            this.minX = minX;
-            this.maxX = maxX;
-            this.minY = minY;
-            this.maxY = maxY;
+        public void addX(BigInteger delta) {
+            x = x.add(delta);
         }
 
-        public long minX() {
-            return minX;
-        }
-
-        public long maxX() {
-            return maxX;
-        }
-
-        public long minY() {
-            return minY;
-        }
-
-        public long maxY() {
-            return maxY;
+        public void addY(BigInteger delta) {
+            y = y.add(delta);
         }
     }
 }
