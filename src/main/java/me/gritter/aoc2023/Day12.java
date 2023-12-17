@@ -43,85 +43,79 @@ public class Day12 implements Solution {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    private String parseGears(String line) {
-        return substringBefore(line, " ");
+    private List<Gear> parseGears(String line) {
+        return substringBefore(line, " ")
+                .chars()
+                .mapToObj(c -> (char) c)
+                .map(Gear::bySymbol)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     private long calculateRearrangementsFromLine(String line) {
-        String gears = parseGears(line);
+        List<Gear> gears = parseGears(line);
         List<Integer> contiguouslyDamaged = parseContiguouslyDamaged(line);
-        return calculateRearrangements(new StringBuilder(gears), contiguouslyDamaged, 0, 0, 0, new HashMap<>());
+        return calculateRearrangements(gears, contiguouslyDamaged, 0, new HashMap<>());
     }
 
-    private long calculateRearrangements(StringBuilder gears, List<Integer> brokenGroups, int index, int brokenGroupIndex, int currentBroken, Map<CacheKey, Long> cache) {
-        CacheKey key = null;
-        if (index < gears.length() - 1 && brokenGroupIndex < brokenGroups.size()) {
-            key = new CacheKey(gears, brokenGroups, index, brokenGroupIndex, currentBroken);
-            Long result = cache.get(key);
-            if (result != null) {
-                return result;
-            }
-        }
-
-        long result = calculateRearrangements_worker(gears, brokenGroups, index, brokenGroupIndex, currentBroken, cache);
-        if (key != null) {
+    private long calculateRearrangements(List<Gear> gears, List<Integer> brokenGroups, int currentBroken, Map<CacheKey, Long> cache) {
+        CacheKey key = new CacheKey(gears, brokenGroups, currentBroken);
+        Long result = cache.get(key);
+        if (result == null) {
+            result = calculateRearrangements_worker(gears, brokenGroups, currentBroken, cache);
             cache.put(key, result);
         }
 
         return result;
     }
 
-    private long calculateRearrangements_worker(StringBuilder gears, List<Integer> brokenGroups, int index, int brokenGroupIndex, int currentBroken, Map<CacheKey, Long> cache) {
-        if (index >= gears.length()) {
-            if (brokenGroupIndex < brokenGroups.size() - 1) {
+    private long calculateRearrangements_worker(List<Gear> gears, List<Integer> brokenGroups, int currentBroken, Map<CacheKey, Long> cache) {
+        if (gears.isEmpty()) {
+            if (brokenGroups.size() > 1) {
                 // There are more broken groups left.
                 return 0;
-            } else if (brokenGroupIndex == brokenGroups.size() - 1) {
-                int brokenExpected = brokenGroups.get(brokenGroupIndex);
-                if (brokenExpected != currentBroken) {
-                    // The last broken group size doesn't match the amount of current contiguously broken gears.
-                    return 0;
-                }
+            } else if (brokenGroups.size() == 1 && currentBroken != brokenGroups.get(0)) {
+                // The last broken group size doesn't match the amount of current contiguously broken gears.
+                return 0;
+            } else {
+                // All previous recursive checks succeeded. Assume this branch was valid.
+                return 1;
             }
-
-            // All previous recursive checks succeeded. Assume this branch was valid.
-            return 1;
         }
 
-        char c = gears.charAt(index);
+        Gear gear = gears.get(0);
 
-        if (brokenGroupIndex >= brokenGroups.size()) {
-            if (c == '#') {
+        if (brokenGroups.isEmpty()) {
+            if (gear == Gear.BROKEN) {
                 // We're not expecting broken gears anymore, but found one.
                 return 0;
             } else {
                 // Continue as normal.
-                return calculateRearrangements(gears, brokenGroups, index + 1, brokenGroupIndex, currentBroken, cache);
+                return calculateRearrangements(gears.subList(1, gears.size()), brokenGroups, currentBroken, cache);
             }
         }
 
-        if (c == '?') {
+        if (gear == Gear.UNKNOWN) {
             long total = 0;
 
-            for (char replacement : List.of('.', '#')) {
-                gears.setCharAt(index, replacement);
-                total += calculateRearrangements(gears, brokenGroups, index, brokenGroupIndex, currentBroken, cache);
-                gears.setCharAt(index, '?');
+            for (Gear replacement : List.of(Gear.WORKING, Gear.BROKEN)) {
+                List<Gear> branchGears = new ArrayList<>(gears);
+                branchGears.set(0, replacement);
+                total += calculateRearrangements(branchGears, brokenGroups, currentBroken, cache);
             }
 
             // Return sum of two branches.
             return total;
         }
 
-        int brokenExpected = brokenGroups.get(brokenGroupIndex);
+        int brokenExpected = brokenGroups.get(0);
 
-        if (c == '#') {
+        if (gear == Gear.BROKEN) {
             currentBroken++;
             if (currentBroken > brokenExpected) {
                 // Found more broken than expected.
                 return 0;
             }
-        } else if (c == '.') {
+        } else if (gear == Gear.WORKING) {
             if (currentBroken > 0) {
                 // Group of contiguously broken gears has ended
                 if (currentBroken != brokenExpected) {
@@ -130,24 +124,50 @@ public class Day12 implements Solution {
                 }
 
                 // Reset running variables for next recursive call.
-                brokenGroupIndex++;
+                brokenGroups = brokenGroups.subList(1, brokenGroups.size());
                 currentBroken = 0;
             }
         }
 
         // Continue as normal.
-        return calculateRearrangements(gears, brokenGroups, index + 1, brokenGroupIndex, currentBroken, cache);
+        return calculateRearrangements(gears.subList(1, gears.size()), brokenGroups, currentBroken, cache);
+    }
+
+    private enum Gear {
+        BROKEN('#'),
+        WORKING('.'),
+        UNKNOWN('?');
+
+        private final char symbol;
+
+        Gear(char symbol) {
+            this.symbol = symbol;
+        }
+
+        public char symbol() {
+            return symbol;
+        }
+
+        public static Gear bySymbol(char symbol) {
+            for (Gear gear : values()) {
+                if (gear.symbol() == symbol) {
+                    return gear;
+                }
+            }
+
+            throw new IllegalArgumentException();
+        }
     }
 
     private static class CacheKey {
 
-        private final String gearsLeft;
-        private final List<Integer> brokenGroupsLeft;
+        private final List<Gear> gears;
+        private final List<Integer> brokenGroups;
         private final int currentBroken;
 
-        public CacheKey(StringBuilder gears, List<Integer> brokenGroups, int index, int brokenGroupIndex, int currentBroken) {
-            this.gearsLeft = gears.substring(index, gears.length());
-            this.brokenGroupsLeft = new ArrayList<>(brokenGroups.subList(brokenGroupIndex, brokenGroups.size()));
+        public CacheKey(List<Gear> gears, List<Integer> brokenGroups, int currentBroken) {
+            this.gears = gears;
+            this.brokenGroups = brokenGroups;
             this.currentBroken = currentBroken;
         }
 
@@ -156,12 +176,12 @@ public class Day12 implements Solution {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             CacheKey cacheKey = (CacheKey) o;
-            return currentBroken == cacheKey.currentBroken && Objects.equals(gearsLeft, cacheKey.gearsLeft) && Objects.equals(brokenGroupsLeft, cacheKey.brokenGroupsLeft);
+            return currentBroken == cacheKey.currentBroken && Objects.equals(gears, cacheKey.gears) && Objects.equals(brokenGroups, cacheKey.brokenGroups);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(gearsLeft, brokenGroupsLeft, currentBroken);
+            return Objects.hash(gears, brokenGroups, currentBroken);
         }
     }
 }
