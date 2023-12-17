@@ -104,7 +104,7 @@ public class Day14 implements Solution {
                 for (int x = 0; x < width; x++) {
                     char symbol = getSymbol(x, y);
                     if (symbol == 'O') {
-                        // Slide this symbol as far up as it can go
+                        // Slide this symbol as far to the vertical extreme as it can go
                         for (int ny = y + dy; ny >= 0 && ny < height; ny += dy) {
                             if (getSymbol(x, ny) == '.') {
                                 setSymbol(x, ny - dy, '.');
@@ -123,7 +123,7 @@ public class Day14 implements Solution {
                 for (int x = dx == 1 ? width - 1 : 0; x >= 0 && x < width; x -= dx) {
                     char symbol = getSymbol(x, y);
                     if (symbol == 'O') {
-                        // Slide this symbol as far up as it can go
+                        // Slide this symbol as far to the horizontal extreme as it can go
                         for (int nx = x + dx; nx >= 0 && nx < width; nx += dx) {
                             if (getSymbol(nx, y) == '.') {
                                 setSymbol(nx - dx, y, '.');
